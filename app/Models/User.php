@@ -37,6 +37,7 @@ class User extends Authenticatable
         'favourite_categories',
         'preferences',
         'remember_token',
+        'profile_photo_path'
     ];
 
     public function progress_lists(){

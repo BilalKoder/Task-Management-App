@@ -7,10 +7,17 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class Users extends Component
 {
-    public $users, $title, $color, $user_id;
+    use WithPagination;
+    use WithFileUploads;
+
+    public $users, $title, $color, $image, $user_id,$first_name,$last_name,$email,$password,$phone;
     public $isOpen = 0;
 
     public function render()
@@ -26,8 +33,11 @@ class Users extends Component
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],
             'phone' => ['required', 'string', 'max:255'],
+            'image' => ['required'],
             'password' => ['min:6'],
         ]);
+
+        $storedImage = $this->image->store('public/users');
 
         $updateData = [
             'first_name' => $this->first_name,
@@ -35,9 +45,10 @@ class Users extends Component
             'email' => $this->email,
             'phone' => $this->phone,
             'password' => Hash::make($this->password),
+            'profile_photo_path' => url('storage'. Str::substr($storedImage, 6)),
         ];
 
-        if(!empty($this->password)){ unset($updateData['password']); }
+        // if(!empty($this->password)){ unset($updateData['password']); }
 
         User::updateOrCreate(['id' => $this->user_id], $updateData);
 

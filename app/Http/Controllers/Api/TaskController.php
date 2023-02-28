@@ -35,14 +35,15 @@ class TaskController extends BaseController
             $tasks->whereHas(['task' => function($query) use ($request->category_id)  {
                 $query->where('category_id', $request->category_id);
             }]);
-       }
+       }                                                                 
     //     if($request->id){
     //         $tasks->where('id',$request->id);
     //    }
         if($request->user_id){
             // $tasks->where('user_id',$request->user_id);
-            $tasks->whereHas(['task' => function($query) use ($request->user_id)  {
-                $query->where('user_id', $request->user_id);
+            $userId = $request->user_id;
+            $tasks->whereHas(['task' => function($query) use ($userId)  {
+                $query->where('user_id', $userId);
             }]);
        }
         if($request->created_at){

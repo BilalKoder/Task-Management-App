@@ -30,6 +30,7 @@
                             <th class="px-4 py-2">Name</th>
                             <th class="px-4 py-2">Email</th>
                             <th class="px-4 py-2">Phone</th>
+                            <th class="px-4 py-2">Image</th>
                             <th class="px-4 py-2">Action</th>
                         </tr>
                     </thead>
@@ -41,6 +42,11 @@
                             <td class="border px-4 py-2">{{ $user->first_name }} {{ $user->last_name }} </td>
                             <td class="border px-4 py-2">{{ $user->email }}</td>
                             <td class="border px-4 py-2">{{ $user->phone }}</td>
+                            @if(!empty($user->profile_photo_path))
+                            <td class="border px-4 py-2"><img src="{{ asset( $user->profile_photo_path) }}" /></td>
+                            @else
+                            <td class="border px-4 py-2"></td>
+                            @endif
                             <td class="border px-4 py-2">
                             <button
                                 wire:click="edit({{ $user->id }})"

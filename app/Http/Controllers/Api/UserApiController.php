@@ -83,6 +83,8 @@ class UserApiController extends BaseController
 
         $user = User::where('email', $request->email)->first();
 
+        // dd($user);
+
         if (!$user) {
             return $this->sendError('Login Failed, Invalid Email Or Password!',null, 422);
         }
@@ -214,13 +216,23 @@ class UserApiController extends BaseController
 
     public function updatePassword(Request $request)
     {
-        $rules = [
-            'email' => ['required|email'],
-            'current_password' => ['required', 'min:6'],
-            'password' => ['required', 'min:6'], //need to pass password_confirmation also in request
-        ];
+        // $rules = [
+        //     'email' => ['required|email'],
+        //     'current_password' => ['required', 'min:6'],
+        //     'password' => ['required', 'min:6'], //need to pass password_confirmation also in request
+        // ];
 
-        $validator = Validator::make($request->all(), $rules);
+        // $validator = Validator::make($request->all(), $rules);
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required',
+            'current_password' => 'required',
+            'password' => 'required',
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError('Validation Error.', $validator->errors(),422);       
+        }
 
         if ($validator->fails()) {
             return $this->sendError($validator->errors(),null, 422);
@@ -250,10 +262,22 @@ class UserApiController extends BaseController
        
         }
 
+        if($request->file('image')){
+            $image = $request->file('image');
+            //store Image to directory
+            $imgName = rand() . '_' . time() . '.' . $image->getClientOriginalExtension();
+            $destinationPath = public_path('task_icons');
+            $imagePath = $destinationPath . "/" . $imgName;
+            $image->move($destinationPath, $imgName);
+            $path = "task_icons" . "/" .basename($imagePath);
+        }
+        
+
         $user = User::find($id);
         $user->first_name = $user->first_name ? $request->first_name: $user->first_name; 
         $user->last_name = $user->last_name ? $request->last_name: $user->last_name; 
         $user->phone = $user->phone ? $request->phone: $user->phone; 
+        $user->profile_photo_path = $request->file('image') ? $path: ''; 
         $user->save(); 
 
         return response(['data' => 'Use Updated successfully.'], 201);
