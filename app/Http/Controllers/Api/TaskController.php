@@ -257,7 +257,7 @@ class TaskController extends BaseController
         } catch (\Throwable $th) {
             
             DB::rollBack();
-            
+
             return $this->sendError('Something went wrong', $th->getMessage());     
         }
       
@@ -349,6 +349,7 @@ class TaskController extends BaseController
         # code...
 
         UserTask::truncate();
+        UserAssignedTask::truncate();
         Progress::truncate();
 
         return response()->json("Deleted Successfully!");
