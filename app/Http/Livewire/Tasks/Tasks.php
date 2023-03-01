@@ -5,6 +5,9 @@ use App\Models\Category;
 use App\Models\Image;
 use App\Models\Task;
 use App\Models\UserTask;
+use App\Models\User;
+use App\Models\UserAssignedTask;
+use App\Models\Progress;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -56,12 +59,21 @@ class Tasks extends Component
             'title' => $this->title,
             'goal' => $this->goal,
             'description' => $this->description,
-            'category_id' => intVal($this->category_id),
+            // 'category_id' => intVal($this->category_id),
+            'category_id' => 1,
             'user_id' => Auth::user()->id,
             'image' => url('storage'. Str::substr($storedImage, 6)),
         ]);
 
 
+        $users = User::where('user_type','user')->get(['id']);
+
+        foreach($users as $user){
+            $assignedTask = new UserAssignedTask;
+            $assignedTask->task_id = $task->id;
+            $assignedTask->user_id = $user->id;
+            $assignedTask->save();
+        }
 
         // Image upload and store name in db
         // if (count($this->photos) > 0) {
@@ -97,6 +109,13 @@ class Tasks extends Component
     public function delete($id)
     {
         UserTask::find($id)->delete();
+
+       $userAssigned= UserAssignedTask::where('task_id', $id)->get();
+
+        foreach($userAssigned as $assigned){
+            Progress::where('task_id', $assigned->id)->delete();
+            $assigned->delete();
+        }
 
         session()->flash('message', 'Task Deleted Successfully.');
     }

@@ -30,15 +30,18 @@ class TaskController extends BaseController
         if($request->category_id){
         
             $categoryId = $request->category_id;
-            $tasks->whereHas(['task' => function($query) use ($categoryId)  {
-                $query->where('category_id', $categoryId);
-            }]);
-       }                                                                 
-   
-        if($request->user_id){
-            $userId = $request->user_id;
-            $tasks->where('user_id', $userId);
-        }
+          
+            $tasks->with(["task" => function ($query) use ($categoryId) {
+                $query->whereHas("task", function ($builder) use ($categoryId) {
+                    $builder->where('category_id', $categoryId);
+                });
+            }]);   
+            }                                                             
+       
+            if($request->user_id){
+                $userId = $request->user_id;
+                $tasks->where('user_id', $userId);
+            }
 
         if($request->created_at){
             $tasks->where(DB::raw("(DATE_FORMAT(created_at,'%Y-%m-%d'))"),Carbon::parse($request->created_at)->format('Y-m-d'));
@@ -65,20 +68,19 @@ class TaskController extends BaseController
         $result = $tasks->paginate();
 
         if($result){
-
             for ($i=0; $i < count($result); $i++) { 
                 # code...
-
                   $prevProgressCount = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
                     ->sum('progress.progress_value');
                     $result[$i]['totalProgress'] = $prevProgressCount;
                     $result[$i]['totalPercent']= round(($prevProgressCount/ $result[$i]['task']['goal'])*100); //add relation task to check goal
-
             }
         }
 
-        return $this->sendResponse($result, 'All Tasks Listing');
+        $data = $this->mapperTaskListing($result);
+
+        return $this->sendResponse($data, 'All Tasks Listing');
     }
 
 
@@ -127,7 +129,9 @@ class TaskController extends BaseController
 
             DB::commit();
 
-            return $this->sendResponse($task,"Task Created Successfully!");
+            $task->id = $assignedTask->id;
+
+            return $this->sendResponse($assignedTask,"Task Created Successfully!");
 
         } catch (\Throwable $th) {
             
@@ -167,10 +171,46 @@ class TaskController extends BaseController
             }
         }
 
-        $task->allProgress = $preRecord;
+        $data = $this->mapperTask($task);
 
-        return $this->sendResponse($task, 'Task Listing');
+        $data->allProgress = $preRecord;
+
+        return $this->sendResponse($data, 'Task Listing');
     }
+
+    function mapperTaskListing($items)
+        {
+           return $items->map(function($item, $key) {
+                return [
+                    "id" => $item->id,
+                    "title" => $item->task->title,
+                    "description" =>  $item->task->description,
+                    "goal" => $item->task->goal,
+                    "type" => $item->task->type,
+                    "created_at" => $item->created_at,
+                    "updated_at" => $item->updated_at,
+                    "image" => $item->task->image,
+                    "totalProgress" => $item->totalProgress,
+                    "totalPercent" => $item->totalPercent,
+                ];
+            });
+        }
+
+        function mapperTask($item)
+        {
+            return (object) [
+                "id" => $item->id,
+                "title" => $item->task->title,
+                "description" =>  $item->task->description,
+                "goal" => $item->task->goal,
+                "type" => $item->task->type,
+                "created_at" => $item->created_at,
+                "updated_at" => $item->updated_at,
+                "image" => $item->task->image,
+                "totalProgress" => $item->totalProgress,
+                "totalPercent" => $item->totalPercent,
+            ];
+        }
 
     public function delete($id){
       
@@ -271,7 +311,6 @@ class TaskController extends BaseController
             $this->sendError('User ID is required, Please send user_id in query param.', null);
         }
 
-        // $tasks  = UserTask::latest();
         $tasks  = UserAssignedTask::latest();
       
        if($request->type && $request->type == "10"){
@@ -279,10 +318,10 @@ class TaskController extends BaseController
                 [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
             );
 
-            // $totalProgressCount = Progress::where('user_id',$request->user_id)
-            // ->whereBetween('created_at', 
-            //         [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
-            //     )->sum('progress_value');
+            $totalProgressCount = Progress::where('user_id',$request->user_id)
+            ->whereBetween('created_at', 
+                    [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
+                )->sum('progress_value');
        }
 
        if($request->type && $request->type == "20"){
@@ -290,30 +329,26 @@ class TaskController extends BaseController
                 [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]
             );
 
-            // $totalProgressCount = Progress::where('user_id',$request->user_id)
-            // ->whereBetween('created_at', 
-            //         [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]
-            //     )->sum('progress_value');
+            $totalProgressCount = Progress::where('user_id',$request->user_id)
+            ->whereBetween('created_at', 
+                    [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]
+                )->sum('progress_value');
         }
 
         if($request->type && $request->type == "30"){
             $tasks->whereBetween('created_at', 
                 [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]
             );
-            // $totalProgressCount = Progress::where('user_id',$request->user_id)
-            // ->whereBetween('created_at', 
-            //         [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]
-            //     )->sum('progress_value');
+            $totalProgressCount = Progress::where('user_id',$request->user_id)
+            ->whereBetween('created_at', 
+                    [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]
+                )->sum('progress_value');
        }
 
        
        if($request->user_id){
            $tasks->where('user_id',$request->user_id);
-        // $tasks->with(['task' => function ($query) {
-        //     $query->where('trashed', '<>', 1);
-        // }])->get();
         }
-        // $totalSumOfGoals = $tasks->sum('goal');
 
         $totalSumOfGoals = 0;
 
@@ -321,23 +356,15 @@ class TaskController extends BaseController
 
         if($allTask){
             foreach ($allTask as $key => $value) {
-                $totalSumOfGoals += $value['goal'];
+                $totalSumOfGoals += $value['task']['goal'];
             }
         }
-
-        // $totalSumOfGoals = $tasks
-        // ->with(['task' => function ($query) {
-        //         $query->where('trashed', '<>', 1);
-        //     }])->sum('goal');
-     
         
         if($totalSumOfGoals == 0){
             return $this->sendResponse($data,"User Analytics",);
         }
 
-
        $data = round(($totalProgressCount/ $totalSumOfGoals)*100); 
-
      
         return $this->sendResponse($data,"User Analytics",);
     }

@@ -52,6 +52,7 @@ class UserApiController extends BaseController
         $user->last_name = $request->get('last_name');
         $user->email = $request->get('email');
         $user->phone = $request->get('phone');
+        $user->user_type = $request->get('user_type') ? $request->get('user_type') : 'user';
         $user->password = Hash::make($request->get('password'));
         $user->save();
 

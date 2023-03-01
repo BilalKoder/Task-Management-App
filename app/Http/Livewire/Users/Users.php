@@ -3,6 +3,8 @@
 namespace App\Http\Livewire\Users;
 
 use App\Models\User;
+use App\Models\UserTask;
+use App\Models\UserAssignedTask;
 use Livewire\Component;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
@@ -22,7 +24,7 @@ class Users extends Component
 
     public function render()
     {
-        $this->users = User::all();
+        $this->users = User::where('user_type','user')->get();
         return view('livewire.users.users');
     }
 
@@ -50,7 +52,18 @@ class Users extends Component
 
         // if(!empty($this->password)){ unset($updateData['password']); }
 
-        User::updateOrCreate(['id' => $this->user_id], $updateData);
+        $user = User::updateOrCreate(['id' => $this->user_id], $updateData);
+
+       
+
+        $tasks = UserTask::where('category_id', 1)->get();
+  
+            foreach($tasks as $task){
+                $assignedTask = new UserAssignedTask;
+                $assignedTask->task_id = $task->id;
+                $assignedTask->user_id = $user->id;
+                $assignedTask->save();
+            }
 
         session()->flash(
             'message',
