@@ -37,9 +37,7 @@ class TaskController extends BaseController
    
         if($request->user_id){
             $userId = $request->user_id;
-            $tasks->whereHas(['task' => function($query) use ($userId)  {
-                $query->where('user_id', $userId);
-            }]);
+            $tasks->where('user_id', $userId);
         }
 
         if($request->created_at){
@@ -75,7 +73,7 @@ class TaskController extends BaseController
                     ->where('progress.task_id', '=', $result[$i]['id'])
                     ->sum('progress.progress_value');
                     $result[$i]['totalProgress'] = $prevProgressCount;
-                    $result[$i]['totalPercent']= round(($prevProgressCount/ $result[$i]['goal'])*100); 
+                    $result[$i]['totalPercent']= round(($prevProgressCount/ $result[$i]['task']['goal'])*100); //add relation task to check goal
 
             }
         }
