@@ -102,10 +102,22 @@ class TaskController extends BaseController
             }
         }
         
+        
+        // $data = $this->mapperTaskListing($result);
 
+        $mappedResult = [];
         $data = $this->mapperTaskListing($result);
+        $mappedResult['data'] = $data;
+        $mappedResult['current_page'] = $result->currentPage();
+        $mappedResult['last_page'] = $result->lastPage();
+        $mappedResult['total'] = $result->total();
 
-        return $this->sendResponse($data, 'All Tasks Listing');
+        // $unMappedData = $result;
+        // $data = $this->mapperTaskListing($result->data);
+        // $mappedData = $unMappedData->data = $data;
+        return $this->sendResponse($mappedResult, 'All Tasks Listing');
+
+        // return $this->sendResponse($result, 'All Tasks Listing');
     }
 
 
@@ -205,7 +217,7 @@ class TaskController extends BaseController
 
     function mapperTaskListing($items)
         {
-           return $items->map(function($item, $key) {
+           return $items->getCollection()->transform(function($item, $key) {
                 return  [
                     "id" => $item->id,
                     "title" => $item->task->title,
