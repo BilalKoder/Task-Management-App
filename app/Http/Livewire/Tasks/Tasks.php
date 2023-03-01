@@ -25,7 +25,7 @@ class Tasks extends Component
     public function render()
     {
         return view('livewire.tasks.tasks', [
-            'tasks' => UserTask::orderBy('id', 'desc')->paginate(),
+            'tasks' => UserTask::orderBy('id', 'desc')->where('category_id',1)->paginate(),
             'categories' => Category::all(),
         ]);
     }

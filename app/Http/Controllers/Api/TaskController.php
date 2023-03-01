@@ -16,7 +16,7 @@ use Carbon\Carbon;
 class TaskController extends BaseController
 {
 
-//     const WEEKLY = 10;
+// const WEEKLY = 10;
 // const MONTHLY = 20;
 // const YEARLY   = 30;
 
@@ -25,40 +25,32 @@ class TaskController extends BaseController
     
     public function index(Request $request)
     {
-
-        // $tasks = UserTask::query();
         $tasks = UserAssignedTask::query();
 
         if($request->category_id){
-            // $tasks->where('category_id',$request->category_id);
-
-            $tasks->whereHas(['task' => function($query) use ($request->category_id)  {
-                $query->where('category_id', $request->category_id);
+        
+            $categoryId = $request->category_id;
+            $tasks->whereHas(['task' => function($query) use ($categoryId)  {
+                $query->where('category_id', $categoryId);
             }]);
        }                                                                 
-    //     if($request->id){
-    //         $tasks->where('id',$request->id);
-    //    }
+   
         if($request->user_id){
-            // $tasks->where('user_id',$request->user_id);
             $userId = $request->user_id;
             $tasks->whereHas(['task' => function($query) use ($userId)  {
                 $query->where('user_id', $userId);
             }]);
-       }
+        }
+
         if($request->created_at){
-            // $tasks->where('created_at',Carbon::parse($request->created_at)->format('Y M d'));
             $tasks->where(DB::raw("(DATE_FORMAT(created_at,'%Y-%m-%d'))"),Carbon::parse($request->created_at)->format('Y-m-d'));
-            // $tasks->whereHas(['task' => function($query) use ($request->user_id)  {
-            //     $query->where(DB::raw("(DATE_FORMAT(created_at,'%Y-%m-%d'))"),Carbon::parse($request->created_at)->format('Y-m-d'));
-            // }]);
-       }
+         }
 
         if($request->type && $request->type == "10"){
             $tasks->whereBetween('created_at', 
                 [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
             );
-       }
+        }
 
        if($request->type && $request->type == "20"){
             $tasks->whereBetween('created_at', 
@@ -150,7 +142,6 @@ class TaskController extends BaseController
     public function show($id){
 
       
-        // $task = UserTask::with('progress')->find($id);
         $task = UserAssignedTask::with('task','task.progress')->find($id);
 
         if(!$task){
@@ -166,7 +157,7 @@ class TaskController extends BaseController
         ->sum('progress.progress_value');
       
         $task->totalProgress = $prevProgressCount;
-        $task->totalPercent = round(($prevProgressCount/ $task->task()->goal)*100); 
+        $task->totalPercent = round(($prevProgressCount/ $task->task->goal)*100); 
 
         $allProgress = Progress::where('task_id',$task->id)->get();
 
@@ -185,7 +176,7 @@ class TaskController extends BaseController
 
     public function delete($id){
       
-        $task = UserAssignedTask::where('task_id',$id)->find();
+        $task = UserAssignedTask::find($id);
 
         if(!$task){
             return $this->sendError('Task By this ID doest not exist', null);       
@@ -238,13 +229,13 @@ class TaskController extends BaseController
             return $this->sendError('Progress Value can not be greater than Total Goal', null);       
         }
 
-        // $prevProgressCount = DB::table('progress')
-        //     ->where('progress.task_id', '=', $id)
-        //     ->sum('progress.progress_value');
+        $prevProgressCount = DB::table('progress')
+            ->where('progress.task_id', '=', $id)
+            ->sum('progress.progress_value');
 
-        // if($prevProgressCount == $task->goal){
-        //     return $this->sendError('You have already completed Task', null);       
-        // }
+        if($prevProgressCount == $task->task->goal){
+            return $this->sendError('You have already completed Task', null);       
+        }
 
     //    $assignedTask = UserAssignedTask::where('task_id',$id)->where('user_id',auth()->user()->id)->find();
 
@@ -266,6 +257,7 @@ class TaskController extends BaseController
         } catch (\Throwable $th) {
             
             DB::rollBack();
+            
             return $this->sendError('Something went wrong', $th->getMessage());     
         }
       
@@ -289,10 +281,10 @@ class TaskController extends BaseController
                 [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
             );
 
-            $totalProgressCount = Progress::where('user_id',$request->user_id)
-            ->whereBetween('created_at', 
-                    [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
-                )->sum('progress_value');
+            // $totalProgressCount = Progress::where('user_id',$request->user_id)
+            // ->whereBetween('created_at', 
+            //         [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
+            //     )->sum('progress_value');
        }
 
        if($request->type && $request->type == "20"){
@@ -300,20 +292,20 @@ class TaskController extends BaseController
                 [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]
             );
 
-            $totalProgressCount = Progress::where('user_id',$request->user_id)
-            ->whereBetween('created_at', 
-                    [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]
-                )->sum('progress_value');
+            // $totalProgressCount = Progress::where('user_id',$request->user_id)
+            // ->whereBetween('created_at', 
+            //         [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]
+            //     )->sum('progress_value');
         }
 
         if($request->type && $request->type == "30"){
             $tasks->whereBetween('created_at', 
                 [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]
             );
-            $totalProgressCount = Progress::where('user_id',$request->user_id)
-            ->whereBetween('created_at', 
-                    [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]
-                )->sum('progress_value');
+            // $totalProgressCount = Progress::where('user_id',$request->user_id)
+            // ->whereBetween('created_at', 
+            //         [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]
+            //     )->sum('progress_value');
        }
 
        

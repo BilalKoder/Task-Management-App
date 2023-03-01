@@ -26,7 +26,7 @@
             @if ($isOpen)
                 @include('livewire.tasks.create')
             @endif
-            <div class="grid grid-flow-row grid-cols-3  gap-4">
+            {{-- <div class="grid grid-flow-row grid-cols-3  gap-4">
                 @foreach ($tasks as $task)
                     <div class="max-w-sm rounded overflow-hidden shadow-lg">
                         <div class="px-6 py-4">
@@ -52,7 +52,49 @@
 
                     </div>
                 @endforeach
-            </div>
+            </div> --}}
+            <table class="table-fixed w-full">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="px-4 py-2 w-20">No.</th>
+                        <th class="px-4 py-2">Name</th>
+                        {{-- <th class="px-4 py-2">Category</th> --}}
+                        <th class="px-4 py-2">Weekly Goal</th>
+                        <th class="px-4 py-2">Image</th>
+                        <th class="px-4 py-2">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php $count = 1; ?>
+                    @foreach($tasks as $task)
+                    <tr>
+                        <td class="border px-4 py-2"><?php echo $count++; ?></td>
+                        <td class="border px-4 py-2">{{ $task->title }} </td>
+                        {{-- <td class="border px-4 py-2">{{ $task->category->title }}</td> --}}
+                        <td class="border px-4 py-2">{{ $task->goal }}</td>
+                        @if(!empty($task->image))
+                        <td class="border px-4 py-2"><img style="width:50px" src="{{ asset( $task->image) }}" /></td>
+                        @else
+                        <td class="border px-4 py-2"></td>
+                        @endif
+                        <td class="border px-4 py-2">
+                            <a href="{{ url('dashboard/tasks', $task->id) }}"
+                                class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:shadow-outline-gray disabled:opacity-25 transition ease-in-out duration-150">
+                                Read task
+                            </a>
+                            <button wire:click="edit({{ $task->id }})"
+                                class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:shadow-outline-gray disabled:opacity-25 transition ease-in-out duration-150">
+                                Edit
+                            </button>
+                            <button wire:click="delete({{ $task->id }})"
+                                class="inline-flex items-center justify-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none focus:border-red-700 focus:shadow-outline-red active:bg-red-600 transition ease-in-out duration-150">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
         <div class="py-4">
             {{ $tasks->links() }}
