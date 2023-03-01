@@ -27,16 +27,7 @@ class TaskController extends BaseController
     {
         $tasks = UserAssignedTask::query();
 
-        if($request->category_id){
-        
-            $categoryId = $request->category_id;
-          
-            $tasks->with(["task" => function ($query) use ($categoryId) {
-                $query->whereHas("task", function ($builder) use ($categoryId) {
-                    $builder->where('category_id', $categoryId);
-                });
-            }]);   
-            }                                                             
+                                                                  
        
             if($request->user_id){
                 $userId = $request->user_id;
@@ -65,7 +56,40 @@ class TaskController extends BaseController
             );
         }
 
+        if($request->category_id){
+        
+            $categoryId = $request->category_id;
+          
+        //     $tasks->with(["task" => function ($query) use ($categoryId) {
+        //         $query->whereHas("task", function ($builder) use ($categoryId) {
+        //             $builder->where('category_id', $categoryId);
+        //         });
+        //     }]);   
+
+            // $result = array_filter($result, function ($item) {
+            //     return $item["task"]['category_id'] == $categoryId;
+            // });
+
+            if($request->category_id == 1){
+
+                $result = $tasks->filter(function ($value, $key) {
+                    // dd($value["task"]['category_id']);
+                    return $value["task"]['category_id'] == 1;
+                });
+            }else{
+
+                $result = $tasks->filter(function ($value, $key) {
+                    // dd($value["task"]['category_id']);
+                    return $value["task"]['category_id'] == 2;
+                });
+            }
+
+           
+        
+        }  
+
         $result = $tasks->paginate();
+       
 
         if($result){
             for ($i=0; $i < count($result); $i++) { 
@@ -77,6 +101,7 @@ class TaskController extends BaseController
                     $result[$i]['totalPercent']= round(($prevProgressCount/ $result[$i]['task']['goal'])*100); //add relation task to check goal
             }
         }
+        
 
         $data = $this->mapperTaskListing($result);
 
@@ -181,12 +206,13 @@ class TaskController extends BaseController
     function mapperTaskListing($items)
         {
            return $items->map(function($item, $key) {
-                return [
+                return  [
                     "id" => $item->id,
                     "title" => $item->task->title,
                     "description" =>  $item->task->description,
                     "goal" => $item->task->goal,
                     "type" => $item->task->type,
+                    "category_id" => $item->task->category_id,
                     "created_at" => $item->created_at,
                     "updated_at" => $item->updated_at,
                     "image" => $item->task->image,
