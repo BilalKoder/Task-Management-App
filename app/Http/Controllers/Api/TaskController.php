@@ -63,7 +63,7 @@ class TaskController extends BaseController
         }
 
         if ($request->created_at) {
-            // $tasks->where(DB::raw("(DATE_FORMAT(created_at,'%Y-%m-%d'))"), Carbon::parse($request->created_at)->format('Y-m-d'));
+         
             $tasks->whereBetween(
                 'created_at',
                 [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
@@ -85,24 +85,10 @@ class TaskController extends BaseController
                     ->where(DB::raw("(DATE_FORMAT(created_at,'%Y-%m-%d'))"), Carbon::parse($request->created_at)->format('Y-m-d'))
                     ->sum('progress.progress_value');
 
-                // if ($request->created_at) {
-                // $tasks->where(DB::raw("(DATE_FORMAT(created_at,'%Y-%m-%d'))"), Carbon::parse($request->created_at)->format('Y-m-d'));
-
-                // $prevProgressCount = DB::table('progress')
-                // ->where('progress.task_id', '=', $result[$i]['id'])
-                // ->where(DB::raw("(DATE_FORMAT(created_at,'%Y-%m-%d'))"), Carbon::parse($request->created_at)->format('Y-m-d'))
-                // ->sum('progress.progress_value');
-
-
-                // }else{
-
                 $prevProgressCount = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
                     ->where('progress.user_id', '=', $request->user_id)
                     ->sum('progress.progress_value');
-
-                // }
-
 
                 $result[$i]['totalProgress'] = $prevProgressCount;
                 $result[$i]['totalPercent'] = round(($prevProgressCount / $result[$i]['task']['goal']) * 100); //add relation task to check goal
@@ -296,7 +282,6 @@ class TaskController extends BaseController
     public function storeProgress(Request $request, $id)
     {
 
-        // $task = UserTask::find($id);
         $task = UserAssignedTask::find($id);
 
         if (!$task) {
@@ -323,8 +308,6 @@ class TaskController extends BaseController
         if ($prevProgressCount == $task->task->goal) {
             return $this->sendError('You have already completed Task', null);
         }
-
-        //    $assignedTask = UserAssignedTask::where('task_id',$id)->where('user_id',auth()->user()->id)->find();
 
         try {
 
