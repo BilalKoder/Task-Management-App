@@ -190,13 +190,35 @@ class TaskController extends BaseController
                 $record['date'] = Carbon::parse($value['created_at'])->format("m-d-Y");
                 $record['value'] = $value['progress_value'];
                 $record['user_id'] = $value['user_id'];
-                array_push($preRecord, (object)$record);
+                array_push($preRecord, $record);
             }
         }
 
+        // Create an empty array to store the values for each date
+            $result = [];
+
+           
+
+            // Loop through the data array
+            foreach ($preRecord as $item) {
+                $date = $item['date'];
+                $value = $item['value'];
+                // If the date already exists in the result array, add the new value to the existing one
+                if (array_key_exists($date, $result)) {
+                    $result[$date]['value'] += $value;
+                }
+                // If the date doesn't exist, add it to the result array as a new item
+                else {
+                    $result[$date] = $item;
+                }
+            }
+
+            // Update the original array with the result array
+            $dataTotalPogress = array_values($result);
+
         $data = $this->mapperTask($task);
 
-        $data->allProgress = $preRecord;
+        $data->allProgress = $dataTotalPogress;
 
         return $this->sendResponse($data, 'Task Listing');
     }
