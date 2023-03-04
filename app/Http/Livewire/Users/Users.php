@@ -77,6 +77,8 @@ class Users extends Component
     public function delete($id)
     {
         User::find($id)->delete();
+        DB::table('user_tasks')->where('user_id', $id)->delete();
+        DB::table('user_assigned_tasks')->where('user_id', $id)->delete();
         session()->flash('message', 'User Deleted Successfully.');
     }
 
