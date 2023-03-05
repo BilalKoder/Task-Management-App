@@ -9,11 +9,14 @@ use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\User;
 use App\Models\Appointments;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\EmailTrait;
+use Mail;
 use Validator;
 use DB;
 
 class AppointmentController extends BaseController
 {
+    use EmailTrait;
     /**
      * Display a listing of the resource.
      *
@@ -61,6 +64,15 @@ class AppointmentController extends BaseController
             $appointment->save();
 
             DB::commit();
+
+            $data= $request->all();
+
+        // $this->sendMail(['email' => $request->email, 'password' => $request->password, 'subject' => "Appointment"], 'emails.appointment');
+
+            Mail::send('emails.appointment', $data, function($message){
+                $message->from(auth()->user()->email??'', auth()->user()->first_name??'');
+                $message->to('boost@pmrloans.com')->subject('Appointment');
+            });
 
             return $this->sendResponse($appointment,"Appointment Created Successfully!");
 

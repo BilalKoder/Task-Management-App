@@ -82,7 +82,7 @@ class TaskController extends BaseController
                 $todayProgress = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
                     ->where('progress.user_id', '=', $request->user_id)
-                    ->where(DB::raw("(DATE_FORMAT(created_at,'%Y-%m-%d'))"), Carbon::parse($request->created_at)->format('Y-m-d'))
+                    ->where(DB::raw("(DATE_FORMAT(progress.progress_date,'%d-%Y-%m'))"), Carbon::parse($request->created_at)->format('d-Y-m'))
                     ->sum('progress.progress_value');
 
                 $prevProgressCount = DB::table('progress')
@@ -178,6 +178,7 @@ class TaskController extends BaseController
 
         $prevProgressCount = DB::table('progress')
             ->where('progress.task_id', '=', $task->id)
+            ->where('progress.user_id', '=', auth()->user()->id)
             ->sum('progress.progress_value');
 
         $task->totalProgress = $prevProgressCount;
@@ -187,7 +188,7 @@ class TaskController extends BaseController
 
         if ($allProgress) {
             foreach ($allProgress as $key => $value) {
-                $record['date'] = Carbon::parse($value['created_at'])->format("m-d-Y");
+                $record['date'] = Carbon::parse($value['progress_date'])->format("m-d-Y");
                 $record['value'] = $value['progress_value'];
                 $record['user_id'] = $value['user_id'];
                 array_push($preRecord, $record);
@@ -196,8 +197,6 @@ class TaskController extends BaseController
 
         // Create an empty array to store the values for each date
             $result = [];
-
-           
 
             // Loop through the data array
             foreach ($preRecord as $item) {
