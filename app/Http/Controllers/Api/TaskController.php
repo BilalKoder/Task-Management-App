@@ -63,7 +63,8 @@ class TaskController extends BaseController
         if ($request->created_at) {
             $tasks->whereBetween(
                 'created_at',
-                [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
+                // [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
+                [Carbon::parse($request->created_at)->startOfWeek(), Carbon::parse($request->created_at)->endOfWeek()]
             );
         }
 
