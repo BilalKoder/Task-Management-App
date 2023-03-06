@@ -42,6 +42,7 @@ Route::get('tasks/{id}', [TaskApiController::class, 'show']);
 Route::get('tasks/{id}/progress_lists', [TaskApiController::class, 'progress_lists']);
 Route::get('delete/tasks', [TaskController::class, 'deleteAllTask']);
 
+Route::get('AssignAllTaskOnWeekEnd', [TaskController::class, 'assignAllTasksOnWeekEnd']);
 
 Route::middleware('auth:sanctum')->group(function () {
 

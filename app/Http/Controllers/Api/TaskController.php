@@ -77,39 +77,27 @@ class TaskController extends BaseController
                 $todayProgress = 0;
 
                 if($request->created_at){
-
                     $startOfDay = Carbon::parse($request->created_at)->startOfDay()->format('d/m/Y');
                     $endOfDay = Carbon::parse($request->created_at)->endOfDay()->format('d/m/Y');
-
                     $todayProgress = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
                     ->where('progress.user_id', '=', $request->user_id)
-                    // ->where(DB::raw("(DATE(progress.progress_date))"), $request->created_at)
-                    // ->whereDate('progress.progress_date','<=',$endOfDay)
-                    // ->whereDate('progress.progress_date','>=',$startOfDay)
                     ->whereBetween('progress.progress_date', [$request->created_at, $request->created_at])
-                    // ->get();
-                    // ->whereDate('progress.progress_date', '=', $request->created_at)
                     ->sum('progress.progress_value');
-                    // ->first();
-                    // dd($todayProgress,$startOfDay,$endOfDay,$request->created_at);
                 }else{
-
-                    // $date = Carbon::now($this->get_local_time()); // or whatever you're using to set it
-                    // $start = $date->copy()->startOfDay();
-
+                    $now = Carbon::now();
+                   // dd($now);
+                    //$startOfDay = Carbon::parse($now)->startOfWeek()->format('d/m/Y');
+                    //$endOfDay = Carbon::parse($now)->endOfWeek()->format('d/m/Y');
+                    //dd($startOfDay,$endOfDay);
+                    //dd($startOfDay,$endOfDay);
                     $startOfDay = Carbon::now()->startOfDay()->format('d/m/Y');
                     $endOfDay = Carbon::now()->endOfDay()->format('d/m/Y');
-                    
-
-                    // dd(date('dd/m/Y'),DB::raw('curdate()'));
-
+                    // dd($startOfDay,$endOfDay);
                     $todayProgress = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
                     ->where('progress.user_id', '=', $request->user_id)
-                    // ->where(DB::raw("(DATE_FORMAT(progress.progress_date,'%d-%m-%Y'))"), $start->format('d-m-Y'))
-                    // ->whereDate('progress.progress_date', '=', DB::raw('curdate()'))
-                    ->whereDate('progress.progress_date','<=',$endOfDay)
+                    ->whereDate('progress.progress_date','=',$endOfDay)
                     ->whereDate('progress.progress_date','>=',$startOfDay)
                     ->sum('progress.progress_value');
                 }
@@ -483,4 +471,21 @@ class TaskController extends BaseController
 
         return response()->json("Deleted Successfully!");
     }
+
+    public function assignAllTasksOnWeekEnd(){
+        $result = UserAssignedTask::select('task_id','user_id')->groupBy('task_id','user_id')->get();
+        if($result){
+            DB::beginTransaction();
+            foreach($result as $r){
+                $assignedTask = new UserAssignedTask;
+                $assignedTask->user_id = $r->user_id;
+                $assignedTask->task_id = $r->task_id;
+                $assignedTask->save();
+            }
+            DB::commit();
+        }
+        
+        return $this->sendResponse(200, "All Tasks");
+    }    
+    
 }
