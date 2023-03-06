@@ -61,12 +61,13 @@ class TaskController extends BaseController
         }
 
         if ($request->created_at) {
-            $date = Carbon::parse(Carbon::createFromFormat('d/m/Y', $request->created_at))->format('d/m/Y');
-            $startOfDay = Carbon::parse($date)->startOfWeek()->format('d/m/Y');
-            $endOfDay = Carbon::parse($date)->endOfWeek()->format('d/m/Y');
+            $date = Carbon::parse(Carbon::createFromFormat('d/m/Y', $request->created_at));
+            $startOfWeek = Carbon::parse($date)->startOfWeek();
+            $endOfWeek = Carbon::parse($date)->endOfWeek();
+            // dd()
             $tasks->whereBetween(
                 'created_at',
-                [Carbon::today()->startOfWeek(), Carbon::now()->endOfWeek()]
+                [$startOfWeek, $endOfWeek]
             );
         }else{
             $tasks->whereBetween(
@@ -89,15 +90,8 @@ class TaskController extends BaseController
                     ->whereBetween('progress.progress_date', [$request->created_at, $request->created_at])
                     ->sum('progress.progress_value');
                 }else{
-                   
-                    //Carbon::now();
-                    //$startOfDay = Carbon::parse($now)->startOfWeek()->format('d/m/Y');
-                    //$endOfDay = Carbon::parse($now)->endOfWeek()->format('d/m/Y');
-                    //dd($startOfDay,$endOfDay);
-                    //dd($startOfDay,$endOfDay);
                     $startOfDay = Carbon::now()->startOfDay()->format('d/m/Y');
                     $endOfDay = Carbon::now()->endOfDay()->format('d/m/Y');
-                    // dd($startOfDay,$endOfDay);
                     $todayProgress = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
                     ->where('progress.user_id', '=', $request->user_id)
