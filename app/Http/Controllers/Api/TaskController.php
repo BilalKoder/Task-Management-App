@@ -61,22 +61,25 @@ class TaskController extends BaseController
         }
 
         if ($request->created_at) {
+            $date = Carbon::parse(Carbon::createFromFormat('d/m/Y', $request->created_at))->format('d/m/Y');
+            $startOfDay = Carbon::parse($date)->startOfWeek()->format('d/m/Y');
+            $endOfDay = Carbon::parse($date)->endOfWeek()->format('d/m/Y');
             $tasks->whereBetween(
                 'created_at',
-                // [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
-                [Carbon::parse($request->created_at)->startOfWeek(), Carbon::parse($request->created_at)->endOfWeek()]
+                [Carbon::today()->startOfWeek(), Carbon::now()->endOfWeek()]
+            );
+        }else{
+            $tasks->whereBetween(
+                'created_at',
+                [Carbon::today()->startOfWeek(), Carbon::today()->endOfWeek()]
             );
         }
 
         $result = $tasks->paginate();
-
-
         if ($result) {
             for ($i = 0; $i < count($result); $i++) {
                 # code...
-
                 $todayProgress = 0;
-
                 if($request->created_at){
                     $startOfDay = Carbon::parse($request->created_at)->startOfDay()->format('d/m/Y');
                     $endOfDay = Carbon::parse($request->created_at)->endOfDay()->format('d/m/Y');
@@ -86,8 +89,8 @@ class TaskController extends BaseController
                     ->whereBetween('progress.progress_date', [$request->created_at, $request->created_at])
                     ->sum('progress.progress_value');
                 }else{
-                    $now = Carbon::now();
-                   // dd($now);
+                   
+                    //Carbon::now();
                     //$startOfDay = Carbon::parse($now)->startOfWeek()->format('d/m/Y');
                     //$endOfDay = Carbon::parse($now)->endOfWeek()->format('d/m/Y');
                     //dd($startOfDay,$endOfDay);
