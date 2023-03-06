@@ -27,8 +27,6 @@ class TaskController extends BaseController
     {
         $tasks = UserAssignedTask::query();
 
-
-
         if ($request->user_id) {
             $userId = $request->user_id;
             $tasks->where('user_id', $userId);
@@ -63,7 +61,6 @@ class TaskController extends BaseController
         }
 
         if ($request->created_at) {
-         
             $tasks->whereBetween(
                 'created_at',
                 [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
@@ -79,11 +76,43 @@ class TaskController extends BaseController
 
                 $todayProgress = 0;
 
-                $todayProgress = DB::table('progress')
+                if($request->created_at){
+
+                    $startOfDay = Carbon::parse($request->created_at)->startOfDay()->format('d/m/Y');
+                    $endOfDay = Carbon::parse($request->created_at)->endOfDay()->format('d/m/Y');
+
+                    $todayProgress = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
                     ->where('progress.user_id', '=', $request->user_id)
-                    ->where(DB::raw("(DATE_FORMAT(created_at,'%Y-%m-%d'))"), Carbon::parse($request->created_at)->format('Y-m-d'))
+                    // ->where(DB::raw("(DATE(progress.progress_date))"), $request->created_at)
+                    // ->whereDate('progress.progress_date','<=',$endOfDay)
+                    // ->whereDate('progress.progress_date','>=',$startOfDay)
+                    ->whereBetween('progress.progress_date', [$request->created_at, $request->created_at])
+                    // ->get();
+                    // ->whereDate('progress.progress_date', '=', $request->created_at)
                     ->sum('progress.progress_value');
+                    // ->first();
+                    // dd($todayProgress,$startOfDay,$endOfDay,$request->created_at);
+                }else{
+
+                    // $date = Carbon::now($this->get_local_time()); // or whatever you're using to set it
+                    // $start = $date->copy()->startOfDay();
+
+                    $startOfDay = Carbon::now()->startOfDay()->format('d/m/Y');
+                    $endOfDay = Carbon::now()->endOfDay()->format('d/m/Y');
+                    
+
+                    // dd(date('dd/m/Y'),DB::raw('curdate()'));
+
+                    $todayProgress = DB::table('progress')
+                    ->where('progress.task_id', '=', $result[$i]['id'])
+                    ->where('progress.user_id', '=', $request->user_id)
+                    // ->where(DB::raw("(DATE_FORMAT(progress.progress_date,'%d-%m-%Y'))"), $start->format('d-m-Y'))
+                    // ->whereDate('progress.progress_date', '=', DB::raw('curdate()'))
+                    ->whereDate('progress.progress_date','<=',$endOfDay)
+                    ->whereDate('progress.progress_date','>=',$startOfDay)
+                    ->sum('progress.progress_value');
+                }
 
                 $prevProgressCount = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
@@ -104,6 +133,16 @@ class TaskController extends BaseController
         $mappedResult['last_page'] = $result->lastPage();
 
         return $this->sendResponse($mappedResult, 'All Tasks Listing');
+    }
+
+    function get_local_time(){
+  
+        $ip = file_get_contents("http://ipecho.net/plain");
+        $url = 'http://ip-api.com/json/'.$ip;
+        $tz = file_get_contents($url);
+        $tz = json_decode($tz,true)['timezone'];
+    
+        return $tz;
     }
 
 
@@ -178,6 +217,7 @@ class TaskController extends BaseController
 
         $prevProgressCount = DB::table('progress')
             ->where('progress.task_id', '=', $task->id)
+            ->where('progress.user_id', '=', auth()->user()->id)
             ->sum('progress.progress_value');
 
         $task->totalProgress = $prevProgressCount;
@@ -187,7 +227,8 @@ class TaskController extends BaseController
 
         if ($allProgress) {
             foreach ($allProgress as $key => $value) {
-                $record['date'] = Carbon::parse($value['created_at'])->format("m-d-Y");
+                // $record['date'] = Carbon::parse($value['progress_date'])->format("m-d-Y");
+                $record['date'] = $value['progress_date'];
                 $record['value'] = $value['progress_value'];
                 $record['user_id'] = $value['user_id'];
                 array_push($preRecord, $record);
@@ -196,8 +237,6 @@ class TaskController extends BaseController
 
         // Create an empty array to store the values for each date
             $result = [];
-
-           
 
             // Loop through the data array
             foreach ($preRecord as $item) {
