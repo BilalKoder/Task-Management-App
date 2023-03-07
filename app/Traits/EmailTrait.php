@@ -18,6 +18,19 @@ trait EmailTrait
         }        
     }
 
+    public function sendMailAppointment($data, $view){
+        try {
+            Mail::send($view, $data, function ($message) use ($data) {
+                $message->subject($data['subject']);
+                $message->from('app-notifications@pmroriginationboost.com','PMR Loans');
+                $message->to('boost@pmrloans.com');
+            });
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }        
+    }
+
     public function sendContactMail($data, $view){
         try {
             Mail::send($view, $data, function ($message) use ($data) {

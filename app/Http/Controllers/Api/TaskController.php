@@ -61,56 +61,41 @@ class TaskController extends BaseController
         }
 
         if ($request->created_at) {
+            $date = Carbon::parse(Carbon::createFromFormat('d/m/Y', $request->created_at));
+            $startOfWeek = Carbon::parse($date)->startOfWeek();
+            $endOfWeek = Carbon::parse($date)->endOfWeek();
+            // dd()
             $tasks->whereBetween(
                 'created_at',
-                // [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
-                [Carbon::parse($request->created_at)->startOfWeek(), Carbon::parse($request->created_at)->endOfWeek()]
+                [$startOfWeek, $endOfWeek]
+            );
+        }else{
+            $tasks->whereBetween(
+                'created_at',
+                [Carbon::today()->startOfWeek(), Carbon::today()->endOfWeek()]
             );
         }
 
         $result = $tasks->paginate();
-
-
         if ($result) {
             for ($i = 0; $i < count($result); $i++) {
                 # code...
-
                 $todayProgress = 0;
-
                 if($request->created_at){
-
                     $startOfDay = Carbon::parse($request->created_at)->startOfDay()->format('d/m/Y');
                     $endOfDay = Carbon::parse($request->created_at)->endOfDay()->format('d/m/Y');
-
                     $todayProgress = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
                     ->where('progress.user_id', '=', $request->user_id)
-                    // ->where(DB::raw("(DATE(progress.progress_date))"), $request->created_at)
-                    // ->whereDate('progress.progress_date','<=',$endOfDay)
-                    // ->whereDate('progress.progress_date','>=',$startOfDay)
                     ->whereBetween('progress.progress_date', [$request->created_at, $request->created_at])
-                    // ->get();
-                    // ->whereDate('progress.progress_date', '=', $request->created_at)
                     ->sum('progress.progress_value');
-                    // ->first();
-                    // dd($todayProgress,$startOfDay,$endOfDay,$request->created_at);
                 }else{
-
-                    // $date = Carbon::now($this->get_local_time()); // or whatever you're using to set it
-                    // $start = $date->copy()->startOfDay();
-
                     $startOfDay = Carbon::now()->startOfDay()->format('d/m/Y');
                     $endOfDay = Carbon::now()->endOfDay()->format('d/m/Y');
-                    
-
-                    // dd(date('dd/m/Y'),DB::raw('curdate()'));
-
                     $todayProgress = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
                     ->where('progress.user_id', '=', $request->user_id)
-                    // ->where(DB::raw("(DATE_FORMAT(progress.progress_date,'%d-%m-%Y'))"), $start->format('d-m-Y'))
-                    // ->whereDate('progress.progress_date', '=', DB::raw('curdate()'))
-                    ->whereDate('progress.progress_date','<=',$endOfDay)
+                    ->whereDate('progress.progress_date','=',$endOfDay)
                     ->whereDate('progress.progress_date','>=',$startOfDay)
                     ->sum('progress.progress_value');
                 }
@@ -407,21 +392,21 @@ class TaskController extends BaseController
         if ($request->type && $request->type == "10") {
             $tasks->whereBetween(
                 'created_at',
-                [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
+                [Carbon::today()->startOfWeek(), Carbon::today()->endOfWeek()]
             );
         }
 
         if ($request->type && $request->type == "20") {
             $tasks->whereBetween(
                 'created_at',
-                [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]
+                [Carbon::today()->startOfMonth(), Carbon::today()->endOfMonth()]
             );
         }
 
         if ($request->type && $request->type == "30") {
             $tasks->whereBetween(
                 'created_at',
-                [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]
+                [Carbon::today()->startOfYear(), Carbon::today()->endOfYear()]
             );
         }
 
@@ -484,4 +469,21 @@ class TaskController extends BaseController
 
         return response()->json("Deleted Successfully!");
     }
+
+    public function assignAllTasksOnWeekEnd(){
+        $result = UserAssignedTask::select('task_id','user_id')->groupBy('task_id','user_id')->get();
+        if($result){
+            DB::beginTransaction();
+            foreach($result as $r){
+                $assignedTask = new UserAssignedTask;
+                $assignedTask->user_id = $r->user_id;
+                $assignedTask->task_id = $r->task_id;
+                $assignedTask->save();
+            }
+            DB::commit();
+        }
+        
+        return $this->sendResponse(200, "All Tasks");
+    }    
+    
 }

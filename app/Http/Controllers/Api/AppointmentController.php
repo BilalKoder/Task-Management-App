@@ -11,9 +11,11 @@ use App\Models\Appointments;
 use Illuminate\Support\Facades\Auth;
 use Validator;
 use DB;
+use App\Traits\EmailTrait;
 
 class AppointmentController extends BaseController
 {
+    use EmailTrait;
     /**
      * Display a listing of the resource.
      *
@@ -61,6 +63,10 @@ class AppointmentController extends BaseController
             $appointment->save();
 
             DB::commit();
+
+            $user = auth()->user();
+
+             $this->sendMailAppointment(['subject' => "Meeting Request - Origination Boost App Notification ", 'user' => $user ,'data' => $request->all() ], 'emails.appointment');
 
             return $this->sendResponse($appointment,"Appointment Created Successfully!");
 
