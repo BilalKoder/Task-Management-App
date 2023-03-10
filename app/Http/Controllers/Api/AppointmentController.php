@@ -39,9 +39,7 @@ class AppointmentController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             
-            'topic' => 'required',
-            'preferred_date' => 'required',
-            'preferred_time' => 'required',
+            'subject' => 'required',
             'message' => 'required',
       
         ]);
@@ -55,9 +53,7 @@ class AppointmentController extends BaseController
             DB::beginTransaction();
               
             $appointment = new Appointments;
-            $appointment->topic = $request->topic;
-            $appointment->preferred_date = $request->preferred_date;
-            $appointment->preferred_time = $request->preferred_time;
+            $appointment->topic = $request->subject;
             $appointment->message = $request->message;
             $appointment->user_id = auth()->user()->id;
             $appointment->save();
@@ -119,7 +115,8 @@ class AppointmentController extends BaseController
 
         $appointment->save();
 
-        return $this->sendResponse($appointment, 'Appointment Updated Successfully!');    }
+        return $this->sendResponse($appointment, 'Appointment Updated Successfully!');  
+      }
 
     public function destroy($id)
     {

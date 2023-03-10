@@ -329,6 +329,7 @@ class TaskController extends BaseController
     public function storeProgress(Request $request, $id)
     {
 
+
         $task = UserAssignedTask::find($id);
 
         if (!$task) {
@@ -350,10 +351,22 @@ class TaskController extends BaseController
 
         $prevProgressCount = DB::table('progress')
             ->where('progress.task_id', '=', $id)
+            ->where('progress.user_id', '=', auth()->user()->id)
             ->sum('progress.progress_value');
+
+            // $prevProgressCount = DB::table('progress')
+            // ->where('progress.task_id', '=', $task->id)
+            // ->where('progress.user_id', '=', auth()->user()->id)
+            // ->sum('progress.progress_value');
 
         if ($prevProgressCount == $task->task->goal) {
             return $this->sendError('You have already completed Task', null);
+        }
+
+        $diffrenceProgress = $task->task->goal- $prevProgressCount;
+
+        if ($request->progress_value > $diffrenceProgress) {
+            return $this->sendError('Progress Value can not be greater than Total Goal', null);
         }
 
         try {
