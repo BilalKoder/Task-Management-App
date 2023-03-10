@@ -41,22 +41,17 @@
                       Meeting Request From {{$user['first_name']??''}}- Origination Boost App Notification</h1>
                       <p
                       style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
-                      Requester Name: {{$user['first_name']??''}} {{$user['last_name']??''}}</p>
+                       Name: {{$user['first_name']??''}} {{$user['last_name']??''}}</p>
                       <p
                       style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
-                      Requester Email: {{$user['email']??''}}</p>
+                       Email: {{$user['email']??''}}</p>
                       <p
                       style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
-                      Requester Phone: {{$user['phone']??''}}</p>
-                      <p
-                      style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
-                      Preffered Date: {{$data['preferred_date']??''}}</p>
+                       Phone: {{$user['phone']??''}}</p>
+            
                     <p
                       style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
-                      Preffered Time: {{$data['preferred_time']??''}}</p>
-                    <p
-                      style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
-                      Topic: {{$data['topic']??''}}</p>
+                      Subject: {{$data['subject']??''}}</p>
                     <p
                       style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
                       Body: {{$data['message']??''}}</p>

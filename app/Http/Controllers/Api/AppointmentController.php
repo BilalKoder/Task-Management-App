@@ -55,6 +55,8 @@ class AppointmentController extends BaseController
             $appointment = new Appointments;
             $appointment->topic = $request->subject;
             $appointment->message = $request->message;
+            $appointment->preferred_date = '0';
+            $appointment->preferred_time = '0';
             $appointment->user_id = auth()->user()->id;
             $appointment->save();
 
@@ -64,7 +66,7 @@ class AppointmentController extends BaseController
 
              $this->sendMailAppointment(['subject' => "Meeting Request - Origination Boost App Notification ", 'user' => $user ,'data' => $request->all() ], 'emails.appointment');
 
-            return $this->sendResponse($appointment,"Appointment Created Successfully!");
+            return $this->sendResponse(null,"Appointment Created Successfully!");
 
         } catch (\Throwable $th) {
             
