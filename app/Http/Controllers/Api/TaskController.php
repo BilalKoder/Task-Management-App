@@ -27,8 +27,6 @@ class TaskController extends BaseController
     {
         $tasks = UserAssignedTask::query();
 
-
-
         if ($request->user_id) {
             $userId = $request->user_id;
             $tasks->where('user_id', $userId);
@@ -63,27 +61,44 @@ class TaskController extends BaseController
         }
 
         if ($request->created_at) {
-         
+            $date = Carbon::parse(Carbon::createFromFormat('d/m/Y', $request->created_at));
+            $startOfWeek = Carbon::parse($date)->startOfWeek();
+            $endOfWeek = Carbon::parse($date)->endOfWeek();
+            // dd()
             $tasks->whereBetween(
                 'created_at',
-                [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
+                [$startOfWeek, $endOfWeek]
+            );
+        }else{
+            $tasks->whereBetween(
+                'created_at',
+                [Carbon::today()->startOfWeek(), Carbon::today()->endOfWeek()]
             );
         }
 
         $result = $tasks->paginate();
-
-
         if ($result) {
             for ($i = 0; $i < count($result); $i++) {
                 # code...
-
                 $todayProgress = 0;
-
-                $todayProgress = DB::table('progress')
+                if($request->created_at){
+                    $startOfDay = Carbon::parse($request->created_at)->startOfDay()->format('d/m/Y');
+                    $endOfDay = Carbon::parse($request->created_at)->endOfDay()->format('d/m/Y');
+                    $todayProgress = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
                     ->where('progress.user_id', '=', $request->user_id)
-                    ->where(DB::raw("(DATE_FORMAT(progress.progress_date,'%d-%Y-%m'))"), Carbon::parse($request->created_at)->format('d-Y-m'))
+                    ->whereBetween('progress.progress_date', [$request->created_at, $request->created_at])
                     ->sum('progress.progress_value');
+                }else{
+                    $startOfDay = Carbon::now()->startOfDay()->format('d/m/Y');
+                    $endOfDay = Carbon::now()->endOfDay()->format('d/m/Y');
+                    $todayProgress = DB::table('progress')
+                    ->where('progress.task_id', '=', $result[$i]['id'])
+                    ->where('progress.user_id', '=', $request->user_id)
+                    ->whereDate('progress.progress_date','=',$endOfDay)
+                    ->whereDate('progress.progress_date','>=',$startOfDay)
+                    ->sum('progress.progress_value');
+                }
 
                 $prevProgressCount = DB::table('progress')
                     ->where('progress.task_id', '=', $result[$i]['id'])
@@ -104,6 +119,16 @@ class TaskController extends BaseController
         $mappedResult['last_page'] = $result->lastPage();
 
         return $this->sendResponse($mappedResult, 'All Tasks Listing');
+    }
+
+    function get_local_time(){
+  
+        $ip = file_get_contents("http://ipecho.net/plain");
+        $url = 'http://ip-api.com/json/'.$ip;
+        $tz = file_get_contents($url);
+        $tz = json_decode($tz,true)['timezone'];
+    
+        return $tz;
     }
 
 
@@ -188,7 +213,9 @@ class TaskController extends BaseController
 
         if ($allProgress) {
             foreach ($allProgress as $key => $value) {
-                $record['date'] = Carbon::parse($value['progress_date'])->format("m-d-Y");
+
+                // $record['date'] = Carbon::parse($value['progress_date'])->format("m-d-Y");
+                $record['date'] = $value['progress_date'];
                 $record['value'] = $value['progress_value'];
                 $record['user_id'] = $value['user_id'];
                 array_push($preRecord, $record);
@@ -303,6 +330,7 @@ class TaskController extends BaseController
     public function storeProgress(Request $request, $id)
     {
 
+
         $task = UserAssignedTask::find($id);
 
         if (!$task) {
@@ -324,10 +352,22 @@ class TaskController extends BaseController
 
         $prevProgressCount = DB::table('progress')
             ->where('progress.task_id', '=', $id)
+            ->where('progress.user_id', '=', auth()->user()->id)
             ->sum('progress.progress_value');
+
+            // $prevProgressCount = DB::table('progress')
+            // ->where('progress.task_id', '=', $task->id)
+            // ->where('progress.user_id', '=', auth()->user()->id)
+            // ->sum('progress.progress_value');
 
         if ($prevProgressCount == $task->task->goal) {
             return $this->sendError('You have already completed Task', null);
+        }
+
+        $diffrenceProgress = $task->task->goal- $prevProgressCount;
+
+        if ($request->progress_value > $diffrenceProgress) {
+            return $this->sendError('Progress Value can not be greater than Total Goal', null);
         }
 
         try {
@@ -366,21 +406,21 @@ class TaskController extends BaseController
         if ($request->type && $request->type == "10") {
             $tasks->whereBetween(
                 'created_at',
-                [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]
+                [Carbon::today()->startOfWeek(), Carbon::today()->endOfWeek()]
             );
         }
 
         if ($request->type && $request->type == "20") {
             $tasks->whereBetween(
                 'created_at',
-                [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]
+                [Carbon::today()->startOfMonth(), Carbon::today()->endOfMonth()]
             );
         }
 
         if ($request->type && $request->type == "30") {
             $tasks->whereBetween(
                 'created_at',
-                [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]
+                [Carbon::today()->startOfYear(), Carbon::today()->endOfYear()]
             );
         }
 
@@ -443,4 +483,21 @@ class TaskController extends BaseController
 
         return response()->json("Deleted Successfully!");
     }
+
+    public function assignAllTasksOnWeekEnd(){
+        $result = UserAssignedTask::select('task_id','user_id')->groupBy('task_id','user_id')->get();
+        if($result){
+            DB::beginTransaction();
+            foreach($result as $r){
+                $assignedTask = new UserAssignedTask;
+                $assignedTask->user_id = $r->user_id;
+                $assignedTask->task_id = $r->task_id;
+                $assignedTask->save();
+            }
+            DB::commit();
+        }
+        
+        return $this->sendResponse(200, "All Tasks");
+    }    
+    
 }

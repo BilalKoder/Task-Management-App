@@ -40,9 +40,7 @@ class AppointmentController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             
-            'topic' => 'required',
-            'preferred_date' => 'required',
-            'preferred_time' => 'required',
+            'subject' => 'required',
             'message' => 'required',
       
         ]);
@@ -56,25 +54,20 @@ class AppointmentController extends BaseController
             DB::beginTransaction();
               
             $appointment = new Appointments;
-            $appointment->topic = $request->topic;
-            $appointment->preferred_date = $request->preferred_date;
-            $appointment->preferred_time = $request->preferred_time;
+            $appointment->topic = $request->subject;
             $appointment->message = $request->message;
+            $appointment->preferred_date = '0';
+            $appointment->preferred_time = '0';
             $appointment->user_id = auth()->user()->id;
             $appointment->save();
 
             DB::commit();
 
-            $data= $request->all();
+            $user = auth()->user();
 
-        // $this->sendMail(['email' => $request->email, 'password' => $request->password, 'subject' => "Appointment"], 'emails.appointment');
+             $this->sendMailAppointment(['subject' => "Meeting Request - Origination Boost App Notification ", 'user' => $user ,'data' => $request->all() ], 'emails.appointment');
 
-            Mail::send('emails.appointment', $data, function($message){
-                $message->from(auth()->user()->email??'', auth()->user()->first_name??'');
-                $message->to('boost@pmrloans.com')->subject('Appointment');
-            });
-
-            return $this->sendResponse($appointment,"Appointment Created Successfully!");
+            return $this->sendResponse(null,"Appointment Created Successfully!");
 
         } catch (\Throwable $th) {
             
@@ -125,7 +118,8 @@ class AppointmentController extends BaseController
 
         $appointment->save();
 
-        return $this->sendResponse($appointment, 'Appointment Updated Successfully!');    }
+        return $this->sendResponse($appointment, 'Appointment Updated Successfully!');  
+      }
 
     public function destroy($id)
     {

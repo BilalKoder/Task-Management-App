@@ -38,28 +38,23 @@
                   <td>
                     <h1
                       style="font-size:16px;margin: 0;font-weight:700;font-family:Verdana,Arial,sans-serif;text-align: center;color:#2B4576">
-                      Appointment Mail</h1>
+                      Meeting Request From {{$user['first_name']??''}}- Origination Boost App Notification</h1>
+                      <p
+                      style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
+                       Name: {{$user['first_name']??''}} {{$user['last_name']??''}}</p>
+                      <p
+                      style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
+                       Email: {{$user['email']??''}}</p>
+                      <p
+                      style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
+                       Phone: {{$user['phone']??''}}</p>
+            
                     <p
                       style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
-                      Preffered Date: Test</p>
+                      Subject: {{$data['subject']??''}}</p>
                     <p
                       style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
-                      Preffered Time: Test</p>
-                    <p
-                      style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
-                      Topic: Test</p>
-                    <p
-                      style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;margin: 15px 0px;">
-                      Message: Test</p>
-               
-                    <p
-                      style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;">
-                      Regards,
-                    </p>
-                    <p
-                      style="margin:0;font-size:14px;line-height:24px;font-family:Verdana,Arial,sans-serif;color:#545454;">
-                      PMR Loans
-                    </p>
+                      Body: {{$data['message']??''}}</p>
                   </td>
                 </tr>
               </table>

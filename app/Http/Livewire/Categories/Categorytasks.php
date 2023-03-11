@@ -64,7 +64,7 @@ class Categorytasks extends Component
 
     public function edit($id)
     {
-        $task = Task->findOrFail($id);
+        $task = Task::findOrFail($id);
 
         $this->task_id = $id;
         $this->title = $task->title;
