@@ -30,7 +30,7 @@ Route::get('show/{id}', [UserApiController::class, 'show']);
 
 
 Route::get('user/{id}', [UserApiController::class, 'show']);
-Route::get('user/{id}/update', [UserApiController::class, 'update']);
+Route::put('user/{id}/update', [UserApiController::class, 'update']);
 Route::get('user/{id}/tasks', [UserApiController::class, 'tasks']);
 Route::get('user/{id}/progress_lists', [UserApiController::class, 'progress_lists']);
 

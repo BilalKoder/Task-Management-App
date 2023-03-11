@@ -275,15 +275,31 @@ class UserApiController extends BaseController
         
 
         $user = User::find($id);
-        $user->first_name = $user->first_name ? $request->first_name: $user->first_name; 
-        $user->last_name = $user->last_name ? $request->last_name: $user->last_name; 
-        $user->phone = $user->phone ? $request->phone: $user->phone; 
-        $user->profile_photo_path = $request->file('image') ? $path: ''; 
-        $user->save(); 
 
-        return response(['data' => 'Use Updated successfully.'], 201);
+        if (!$user) {
+            return $this->sendError('User does not exists!',null, 422);
+        }
 
+        
+        if($request->first_name){
+            $user->first_name =  $request->first_name; 
+        }
+        if($request->last_name)
+        {
+            $user->last_name = $request->last_name; 
+        }
+        if($request->phone)
+        {
+            $user->phone = $request->phone; 
+        }
+        if($request->file('image'))
+        {
+            $user->profile_photo_path = $request->file('image') ? $path: ''; 
+        }
+         $user->save(); 
 
+        // return response(['data' => 'Use Updated successfully.'], 201);
+        return $this->sendResponse($user,"User Updated Successfully!");
 
     }
 
